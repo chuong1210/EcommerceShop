@@ -12,7 +12,7 @@ import java.util.logging.Logger;
 @Component
 @Aspect
 public class UserActivityLogger {
-    private static final Logger logger = (Logger) LoggerFactory.getLogger(UserActivityLogger.class);
+    private  Logger logger = Logger.getLogger(getClass().getName());
 
     @Pointcut("within(@org.springframework.web.bind.annotation.RestController *)")
     public void controllerMethods() {}

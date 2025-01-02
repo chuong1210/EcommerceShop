@@ -77,7 +77,11 @@ public class OrderDetailService implements IOrderDetailService{
     }
 
     @Override
-    public List<OrderDetail> findByOrderId(Long orderId) {
-        return orderDetailRepository.findByOrderId(orderId);
+    public List<OrderDetail> findByOrderId(Long orderId) throws  DataNotFoundException{
+        List<OrderDetail> orderDetails = orderDetailRepository.findByOrderId(orderId);
+        if (orderDetails.isEmpty()) {
+            throw new DataNotFoundException("Order details not found for order ID: " + orderId);
+        }
+        return orderDetails;
     }
 }

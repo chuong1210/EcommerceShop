@@ -2,16 +2,20 @@ package com.project.shopapp.controllers;
 
 import com.project.shopapp.components.LocalizationUtils;
 import com.project.shopapp.dtos.*;
+import com.project.shopapp.exceptions.DataNotFoundException;
 import com.project.shopapp.models.Order;
+import com.project.shopapp.responses.ApiResponse;
 import com.project.shopapp.responses.order.OrderListResponse;
 import com.project.shopapp.responses.order.OrderResponse;
 import com.project.shopapp.services.orders.IOrderService;
 import com.project.shopapp.utils.MessageKeys;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.aspectj.weaver.ast.Or;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
@@ -27,71 +31,61 @@ public class OrderController {
     private final LocalizationUtils localizationUtils;
     @PostMapping("")
     @PreAuthorize("hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')")
-    public ResponseEntity<?> createOrder(
+    public ApiResponse<Boolean> createOrder(
             @Valid @RequestBody OrderDTO orderDTO,
             BindingResult result
-    ) {
-        try {
+    ) throws  Exception {
             if(result.hasErrors()) {
                 List<String> errorMessages = result.getFieldErrors()
                         .stream()
                         .map(FieldError::getDefaultMessage)
                         .toList();
-                return ResponseEntity.badRequest().body(errorMessages);
+                return ApiResponse.<Boolean>builder().data(false).message(String.join(";",errorMessages)).httpStatus(HttpStatus.BAD_REQUEST).build();
             }
             Order orderResponse = orderService.createOrder(orderDTO);
-            return ResponseEntity.ok(orderResponse);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+            return ApiResponse.<Boolean>builder().data(true).message("Create order successfully").httpStatus(HttpStatus.CREATED).build();
+
     }
     @GetMapping("/user/{user_id}") // Thêm biến đường dẫn "user_id"
     //GET http://localhost:8088/api/v1/orders/user/4
-    public ResponseEntity<?> getOrders(@Valid @PathVariable("user_id") Long userId) {
-        try {
-            List<Order> orders = orderService.findByUserId(userId);
-            return ResponseEntity.ok(orders);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ApiResponse<List<Order>> getOrders(@Valid @PathVariable("user_id") Long userId) {
+        List<Order> orders = orderService.findByUserId(userId);
+        return ApiResponse.<List<Order>>builder().data(orders).message("get list of order successfully").httpStatus(HttpStatus.OK).build();
+
     }
     //GET http://localhost:8088/api/v1/orders/2
     @GetMapping("/{id}")
-    public ResponseEntity<?> getOrder(@Valid @PathVariable("id") Long orderId) {
-        try {
+    public ApiResponse<OrderResponse> getOrder(@Valid @PathVariable("id") Long orderId) {
             Order existingOrder = orderService.getOrder(orderId);
             OrderResponse orderResponse = OrderResponse.fromOrder(existingOrder);
-            return ResponseEntity.ok(orderResponse);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+            return ApiResponse.<OrderResponse>builder().data(orderResponse).message("get order successfully").httpStatus(HttpStatus.OK).build();
+
+
     }
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     //PUT http://localhost:8088/api/v1/orders/2
     //công việc của admin
-    public ResponseEntity<?> updateOrder(
+    public ApiResponse<Order> updateOrder(
             @Valid @PathVariable long id,
-            @Valid @RequestBody OrderDTO orderDTO) {
+            @Valid @RequestBody OrderDTO orderDTO) throws DataNotFoundException,Exception {
 
-        try {
             Order order = orderService.updateOrder(id, orderDTO);
-            return ResponseEntity.ok(order);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+            return ApiResponse.<Order>builder().data(order).message("Update order successfully").httpStatus(HttpStatus.OK).build();
+
+
     }
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<?> deleteOrder(@Valid @PathVariable Long id) {
+    public ApiResponse<String> deleteOrder(@Valid @PathVariable Long id) {
         //xóa mềm => cập nhật trường active = false
         orderService.deleteOrder(id);
         String result = localizationUtils.getLocalizedMessage(
                 MessageKeys.DELETE_ORDER_SUCCESSFULLY, id);
-        return ResponseEntity.ok().body(result);
+       return ApiResponse.<String>builder().data(result).message(result).httpStatus(HttpStatus.OK).build();
     }
     @GetMapping("/get-orders-by-keyword")
-    public ResponseEntity<OrderListResponse> getOrdersByKeyword(
+    public ApiResponse<OrderListResponse> getOrdersByKeyword(
             @RequestParam(defaultValue = "", required = false) String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int limit
@@ -108,10 +102,9 @@ public class OrderController {
         // Lấy tổng số trang
         int totalPages = orderPage.getTotalPages();
         List<OrderResponse> orderResponses = orderPage.getContent();
-        return ResponseEntity.ok(OrderListResponse
-                .builder()
-                .orders(orderResponses)
+        return ApiResponse.<OrderListResponse>builder().data(OrderListResponse.builder().orders(orderResponses)
                 .totalPages(totalPages)
-                .build());
+                .build()).message("Get order list response successfully").httpStatus(HttpStatus.OK).build();
+
     }
 }

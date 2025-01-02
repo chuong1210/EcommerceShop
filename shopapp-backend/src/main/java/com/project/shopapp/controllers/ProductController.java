@@ -4,8 +4,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.javafaker.Faker;
 import com.project.shopapp.components.LocalizationUtils;
 import com.project.shopapp.dtos.*;
+import com.project.shopapp.exceptions.DataNotFoundException;
 import com.project.shopapp.models.Product;
 import com.project.shopapp.models.ProductImage;
+import com.project.shopapp.responses.ApiResponse;
+import com.project.shopapp.responses.order.OrderDetailResponse;
+import com.project.shopapp.responses.order.OrderListResponse;
 import com.project.shopapp.responses.product.ProductListResponse;
 import com.project.shopapp.responses.product.ProductResponse;
 import com.project.shopapp.services.product.IProductRedisService;
@@ -45,23 +49,24 @@ public class ProductController {
     @PostMapping("")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     //POST http://localhost:8088/v1/api/products
-    public ResponseEntity<?> createProduct(
+    public ApiResponse<Product> createProduct(
             @Valid @RequestBody ProductDTO productDTO,
             BindingResult result
-    ) {
-        try {
+    ) throws DataNotFoundException, Exception {
+
             if(result.hasErrors()) {
                 List<String> errorMessages = result.getFieldErrors()
                         .stream()
                         .map(FieldError::getDefaultMessage)
                         .toList();
-                return ResponseEntity.badRequest().body(errorMessages);
-            }
+                return ApiResponse.<Product>builder()
+                        .httpStatus(HttpStatus.BAD_REQUEST)
+                        .message(String.join("; ",errorMessages)).build();            }
             Product newProduct = productService.createProduct(productDTO);
-            return ResponseEntity.ok(newProduct);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        return ApiResponse.<Product>builder().data(newProduct)
+                .httpStatus(HttpStatus.CREATED)
+                .message("Create order detail successfully").build();
+
     }
 
     @PostMapping(value = "uploads/{id}",
@@ -134,7 +139,7 @@ public class ProductController {
     }
 
     @GetMapping("")
-    public ResponseEntity<ProductListResponse> getProducts(
+    public ApiResponse<ProductListResponse> getProducts(
             @RequestParam(defaultValue = "") String keyword,
             @RequestParam(defaultValue = "0", name = "category_id") Long categoryId,
             @RequestParam(defaultValue = "0") int page,
@@ -173,50 +178,45 @@ public class ProductController {
             );
         }
 
-        return ResponseEntity.ok(ProductListResponse
-                        .builder()
-                        .products(productResponses)
-                        .totalPages(totalPages)
-                        .build());
+
+        return ApiResponse.<ProductListResponse>builder().data(ProductListResponse.builder().products(productResponses)
+                .totalPages(totalPages)
+                .build()).message("Get product list response successfully").httpStatus(HttpStatus.OK).build();
+
     }
     //http://localhost:8088/api/v1/products/6
     @GetMapping("/{id}")
-    public ResponseEntity<?> getProductById(
+    public ApiResponse<ProductResponse> getProductById(
             @PathVariable("id") Long productId
-    ) {
-        try {
+    ) throws  DataNotFoundException,Exception {
             Product existingProduct = productService.getProductById(productId);
-            return ResponseEntity.ok(ProductResponse.fromProduct(existingProduct));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
 
+        return ApiResponse.<ProductResponse>builder().data(ProductResponse.fromProduct(existingProduct))
+                .httpStatus(HttpStatus.OK)
+                .message("Get product with id:" +productId+" successfully").build();
     }
     @GetMapping("/by-ids")
-    public ResponseEntity<?> getProductsByIds(@RequestParam("ids") String ids) {
+    public ApiResponse<List<Product>>  getProductsByIds(@RequestParam("ids") String ids) {
         //eg: 1,3,5,7
-        try {
             // Tách chuỗi ids thành một mảng các số nguyên
             List<Long> productIds = Arrays.stream(ids.split(","))
                     .map(Long::parseLong)
                     .collect(Collectors.toList());
             List<Product> products = productService.findProductsByIds(productIds);
-            return ResponseEntity.ok(products);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+
+            return ApiResponse.<List<Product>>builder().data(products)
+                    .httpStatus(HttpStatus.OK)
+                    .message("Get product with id:" +ids+" successfully").build();
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @Operation(security = { @SecurityRequirement(name = "bearer-key") })
-    public ResponseEntity<String> deleteProduct(@PathVariable long id) {
-        try {
+    public ApiResponse<String> deleteProduct(@PathVariable long id) {
             productService.deleteProduct(id);
-            return ResponseEntity.ok(String.format("Product with id = %d deleted successfully", id));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+            return ApiResponse.<String>builder().data(String.format("Product with id = %d deleted successfully", id))
+                    .httpStatus(HttpStatus.OK).build();
+
     }
     //@PostMapping("/generateFakeProducts")
     private ResponseEntity<String> generateFakeProducts() {
@@ -246,14 +246,14 @@ public class ProductController {
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     //@SecurityRequirement(name="bearer-key")
     @Operation(security = { @SecurityRequirement(name = "bearer-key") })
-    public ResponseEntity<?> updateProduct(
+    public ApiResponse<Product> updateProduct (
             @PathVariable long id,
-            @RequestBody ProductDTO productDTO) {
-        try {
+            @RequestBody ProductDTO productDTO) throws  DataNotFoundException, Exception{
             Product updatedProduct = productService.updateProduct(id, productDTO);
-            return ResponseEntity.ok(updatedProduct);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+
+            return ApiResponse.<Product>builder().data(updatedProduct)
+                    .httpStatus(HttpStatus.OK)
+                    .message("update product with id:" +id+" successfully").build();
+
     }
 }

@@ -123,7 +123,7 @@ public class OrderService implements IOrderService{
                 new DataNotFoundException("Cannot find order with id: " + id));
         User existingUser = userRepository.findById(
                 orderDTO.getUserId()).orElseThrow(() ->
-                new DataNotFoundException("Cannot find user with id: " + id));
+                new DataNotFoundException("Cannot find user with id: " +  orderDTO.getUserId()));
         // Tạo một luồng bảng ánh xạ riêng để kiểm soát việc ánh xạ
         modelMapper.typeMap(OrderDTO.class, Order.class)
                 .addMappings(mapper -> mapper.skip(Order::setId));

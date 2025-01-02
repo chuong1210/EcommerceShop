@@ -4,11 +4,8 @@ import com.project.shopapp.components.JwtTokenUtils;
 import com.project.shopapp.components.LocalizationUtils;
 import com.project.shopapp.dtos.UpdateUserDTO;
 import com.project.shopapp.dtos.UserDTO;
-import com.project.shopapp.exceptions.DataNotFoundException;
+import com.project.shopapp.exceptions.*;
 
-import com.project.shopapp.exceptions.ExpiredTokenException;
-import com.project.shopapp.exceptions.InvalidPasswordException;
-import com.project.shopapp.exceptions.PermissionDenyException;
 import com.project.shopapp.models.*;
 import com.project.shopapp.repositories.RoleRepository;
 import com.project.shopapp.repositories.TokenRepository;
@@ -84,7 +81,10 @@ public class UserService implements IUserService{
     ) throws Exception {
         Optional<User> optionalUser = userRepository.findByPhoneNumber(phoneNumber);
         if(optionalUser.isEmpty()) {
-            throw new DataNotFoundException(localizationUtils.getLocalizedMessage(MessageKeys.WRONG_PHONE_PASSWORD));
+//            throw new DataNotFoundException(localizationUtils.getLocalizedMessage(MessageKeys.WRONG_PHONE_PASSWORD));
+
+             throw new AppException(ErrorCode.INVALID_USERNAME_OR_PASSWORD);
+
         }
         //return optionalUser.get();//muốn trả JWT token ?
         User existingUser = optionalUser.get();

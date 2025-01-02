@@ -1,5 +1,6 @@
 package com.project.shopapp.services.token;
 
+import com.nimbusds.jose.JOSEException;
 import com.project.shopapp.components.JwtTokenUtils;
 import com.project.shopapp.exceptions.DataNotFoundException;
 import com.project.shopapp.exceptions.ExpiredTokenException;
@@ -11,8 +12,10 @@ import com.project.shopapp.repositories.TokenRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -34,14 +37,16 @@ public class TokenService implements ITokenService{
 
     @Transactional
     @Override
-    public Token refreshToken(String refreshToken, User user) throws Exception{
+    public Token refreshToken(String refreshToken, User user) throws Exception, ParseException, JOSEException {
         Token existingToken = tokenRepository.findByRefreshToken(refreshToken);
         if(existingToken == null) {
             throw new DataNotFoundException("Refresh token does not exist");
         }
         if(existingToken.getRefreshExpirationDate().compareTo(LocalDateTime.now()) < 0){
             tokenRepository.delete(existingToken);
-            throw new ExpiredTokenException("Refresh token is expired");
+           throw new ExpiredTokenException("Refresh token is expired");
+//            throw  new JwtException();
+
         }
         String token = jwtTokenUtil.generateToken(user);
         LocalDateTime expirationDateTime = LocalDateTime.now().plusSeconds(expiration);

@@ -3,12 +3,13 @@ package com.project.shopapp.controllers;
 import com.project.shopapp.components.LocalizationUtils;
 import com.project.shopapp.dtos.*;
 import com.project.shopapp.models.Category;
+import com.project.shopapp.responses.ApiResponse;
 import com.project.shopapp.responses.category.CategoryResponse;
-import com.project.shopapp.responses.category.UpdateCategoryResponse;
 import com.project.shopapp.services.category.CategoryService;
 import com.project.shopapp.utils.MessageKeys;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
@@ -29,7 +30,7 @@ public class CategoryController {
     @PostMapping("")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     //Nếu tham số truyền vào là 1 object thì sao ? => Data Transfer Object = Request Object
-    public ResponseEntity<CategoryResponse> createCategory(
+    public ApiResponse<CategoryResponse> createCategory(
             @Valid @RequestBody CategoryDTO categoryDTO,
             BindingResult result) {
         CategoryResponse categoryResponse = new CategoryResponse();
@@ -38,56 +39,49 @@ public class CategoryController {
                     .stream()
                     .map(FieldError::getDefaultMessage)
                     .toList();
-            categoryResponse.setMessage(localizationUtils.getLocalizedMessage(MessageKeys.INSERT_CATEGORY_FAILED));
             categoryResponse.setErrors(errorMessages);
-            return ResponseEntity.badRequest().body(categoryResponse);
+            return ApiResponse.<CategoryResponse>builder().data(categoryResponse).message(localizationUtils.getLocalizedMessage(MessageKeys.INSERT_CATEGORY_FAILED)).httpStatus(HttpStatus.OK).build();
         }
         Category category = categoryService.createCategory(categoryDTO);
         categoryResponse.setCategory(category);
-        return ResponseEntity.ok(categoryResponse);
+        return ApiResponse.<CategoryResponse>builder().data(categoryResponse).message(localizationUtils.getLocalizedMessage(MessageKeys.INSERT_CATEGORY_SUCCESSFULLY)).httpStatus(HttpStatus.OK).build();
     }
 
     //Hiện tất cả các categories
     @GetMapping("")
-    public ResponseEntity<List<Category>> getAllCategories(
+    public ApiResponse<List<Category>> getAllCategories(
             @RequestParam("page")     int page,
             @RequestParam("limit")    int limit
     ) {
         List<Category> categories = categoryService.getAllCategories();
-        return ResponseEntity.ok(categories);
+        return ApiResponse.<List<Category>>builder().data(categories).message("Susscess get list category").httpStatus(HttpStatus.OK).build();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getCategoryById(
+    public ApiResponse<Category> getCategoryById (
             @PathVariable("id") Long categoryId
-    ) {
-        try {
+    ) throws Exception {
             Category existingCategory = categoryService.getCategoryById(categoryId);
-            return ResponseEntity.ok(existingCategory);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        return ApiResponse.<Category>builder().data(existingCategory).message("Susscess get  category by Id").httpStatus(HttpStatus.OK).build();
+
     }
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<UpdateCategoryResponse> updateCategory(
+    public ApiResponse<CategoryResponse> updateCategory(
             @PathVariable Long id,
             @Valid @RequestBody CategoryDTO categoryDTO
     ) {
-        UpdateCategoryResponse updateCategoryResponse = new UpdateCategoryResponse();
-        categoryService.updateCategory(id, categoryDTO);
-        updateCategoryResponse.setMessage(localizationUtils.getLocalizedMessage(MessageKeys.UPDATE_CATEGORY_SUCCESSFULLY));
-        return ResponseEntity.ok(updateCategoryResponse);
+        CategoryResponse updateCategoryResponse = new CategoryResponse();
+        Category ct=categoryService.updateCategory(id, categoryDTO);
+        updateCategoryResponse.setCategory(ct);
+        return ApiResponse.<CategoryResponse>builder().data(updateCategoryResponse).message(localizationUtils.getLocalizedMessage(MessageKeys.UPDATE_CATEGORY_SUCCESSFULLY)).httpStatus(HttpStatus.OK).build();
     }
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<?> deleteCategory(@PathVariable Long id) {
-        try {
+    public ApiResponse<Boolean> deleteCategory(@PathVariable Long id) throws Exception {
             categoryService.deleteCategory(id);
-            return ResponseEntity.ok("");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        return ApiResponse.<Boolean>builder().data(true).message(localizationUtils.getLocalizedMessage(MessageKeys.DELETE_CATEGORY_SUCCESSFULLY,id)).httpStatus(HttpStatus.OK).build();
+
 
     }
 }

@@ -1,6 +1,7 @@
 package com.project.shopapp.services.category;
 
 import com.project.shopapp.dtos.CategoryDTO;
+import com.project.shopapp.exceptions.DataNotFoundException;
 import com.project.shopapp.models.Category;
 import com.project.shopapp.models.Product;
 import com.project.shopapp.repositories.CategoryRepository;
@@ -52,7 +53,7 @@ public class CategoryService implements ICategoryService {
     @Transactional
     public Category deleteCategory(long id) throws Exception {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new ChangeSetPersister.NotFoundException());
+                .orElseThrow(() -> new DataNotFoundException("Category id not found"));
 
         List<Product> products = productRepository.findByCategory(category);
         if (!products.isEmpty()) {

@@ -12,7 +12,7 @@ public interface IOrderDetailService {
     OrderDetail updateOrderDetail(Long id, OrderDetailDTO newOrderDetailData)
             throws DataNotFoundException;
     void deleteById(Long id);
-    List<OrderDetail> findByOrderId(Long orderId);
+    List<OrderDetail> findByOrderId(Long orderId) throws DataNotFoundException;;
 
 
 }

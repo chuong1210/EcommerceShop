@@ -13,7 +13,7 @@ import java.util.logging.Logger;
 
 @Aspect
 public class PerformanceAspect {
-    private Logger logger = (Logger) LoggerFactory.getLogger(getClass().getName());
+    private Logger logger =  Logger.getLogger(getClass().getName());
 
     private String getMethodName(JoinPoint joinPoint) {
         return joinPoint.getSignature().getName();
