@@ -1,4 +1,4 @@
-import { ApplicationConfig } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { withFetch } from '@angular/common/http';
@@ -9,7 +9,6 @@ import { Provider } from '@angular/core';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { TokenInterceptor } from './interceptors/token.interceptor';
 import { importProvidersFrom } from '@angular/core';
-import { HttpClientModule } from '@angular/common/http';
 import { adminRoutes } from './components/admin/admin-routes';
 import { RouterModule } from '@angular/router';
 
@@ -19,6 +18,7 @@ const tokenInterceptorProvider: Provider =
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes), 
     //importProvidersFrom(RouterModule.forRoot(routes)),
     importProvidersFrom(RouterModule.forChild(adminRoutes)),    
@@ -26,6 +26,6 @@ export const appConfig: ApplicationConfig = {
     //provideHttpClient(),
     tokenInterceptorProvider,
     provideClientHydration(),
-    importProvidersFrom(HttpClientModule),
+    //importProvidersFrom(HttpClientModule),
   ]
 };

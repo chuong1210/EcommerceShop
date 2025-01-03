@@ -1,6 +1,7 @@
 package com.project.shopapp.controllers;
 
 import com.project.shopapp.components.LocalizationUtils;
+import com.project.shopapp.components.converters.CategoryMessageConverter;
 import com.project.shopapp.dtos.*;
 import com.project.shopapp.models.Category;
 import com.project.shopapp.responses.ApiResponse;
@@ -11,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -26,6 +28,7 @@ import java.util.List;
 public class CategoryController {
     private final CategoryService categoryService;
     private final LocalizationUtils localizationUtils;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @PostMapping("")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
@@ -44,6 +47,9 @@ public class CategoryController {
         }
         Category category = categoryService.createCategory(categoryDTO);
         categoryResponse.setCategory(category);
+        kafkaTemplate.send("insert-category", category);
+        this.kafkaTemplate.setMessageConverter(new CategoryMessageConverter());
+
         return ApiResponse.<CategoryResponse>builder().data(categoryResponse).message(localizationUtils.getLocalizedMessage(MessageKeys.INSERT_CATEGORY_SUCCESSFULLY)).httpStatus(HttpStatus.OK).build();
     }
 
@@ -54,6 +60,7 @@ public class CategoryController {
             @RequestParam("limit")    int limit
     ) {
         List<Category> categories = categoryService.getAllCategories();
+        this.kafkaTemplate.send("get-all-categories",categories);
         return ApiResponse.<List<Category>>builder().data(categories).message("Susscess get list category").httpStatus(HttpStatus.OK).build();
     }
 

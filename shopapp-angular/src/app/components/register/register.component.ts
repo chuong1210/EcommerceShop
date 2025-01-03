@@ -1,12 +1,13 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, ViewChild, inject } from '@angular/core';
 import { NgForm } from '@angular/forms';
-import { Router } from '@angular/router';
-import { UserService } from '../../services/user.service';
 import { RegisterDTO } from '../../dtos/user/register.dto';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HeaderComponent } from '../header/header.component';
 import { FooterComponent } from '../footer/footer.component';
+import { ApiResponse } from '../../responses/api.response';
+import { HttpErrorResponse } from '@angular/common/http';
+import { BaseComponent } from '../base/base.component';
 @Component({
   selector: 'app-register',
   templateUrl: './register.component.html',
@@ -19,7 +20,7 @@ import { FooterComponent } from '../footer/footer.component';
     FooterComponent
   ]
 })
-export class RegisterComponent {
+export class RegisterComponent extends BaseComponent{
   @ViewChild('registerForm') registerForm!: NgForm;
   // Khai báo các biến tương ứng với các trường dữ liệu trong form
   phoneNumber: string;
@@ -29,10 +30,10 @@ export class RegisterComponent {
   address:string;
   isAccepted: boolean;
   dateOfBirth: Date;
-  showPassword: boolean = false;
-
-  constructor(private router: Router, private userService: UserService){
-    debugger
+  showPassword: boolean = false;  
+  
+  constructor(){
+    super();    
     this.phoneNumber = '';
     this.password = '';
     this.retypePassword = '';
@@ -40,9 +41,7 @@ export class RegisterComponent {
     this.address = '';
     this.isAccepted = true;
     this.dateOfBirth = new Date();
-    this.dateOfBirth.setFullYear(this.dateOfBirth.getFullYear() - 18);
-    //inject
-
+    this.dateOfBirth.setFullYear(this.dateOfBirth.getFullYear() - 18);    
   }
   onPhoneNumberChange(){
     console.log(`Phone typed: ${this.phoneNumber}`)
@@ -56,7 +55,7 @@ export class RegisterComponent {
                     `fullName: ${this.fullName}`+
                     `isAccepted: ${this.isAccepted}`+
                     `dateOfBirth: ${this.dateOfBirth}`;
-    //alert(message);
+    //console.error(message);
     debugger
     
     const registerDTO:RegisterDTO = {
@@ -71,7 +70,7 @@ export class RegisterComponent {
         "role_id": 1
     }
     this.userService.register(registerDTO).subscribe({
-        next: (response: any) => {
+        next: (apiResponse: ApiResponse) => {
           debugger
           const confirmation = window
             .confirm('Đăng ký thành công, mời bạn đăng nhập. Bấm "OK" để chuyển đến trang đăng nhập.');
@@ -82,10 +81,16 @@ export class RegisterComponent {
         complete: () => {
           debugger
         },
-        error: (error: any) => {        
-          debugger  
-          alert(error?.error?.message ?? '')          
-        }
+        error: (error: HttpErrorResponse) => {
+          debugger;
+          //có thể hiển thị lỗi này bằng Toast trên Bootstrap được ko
+          //console.error(error?.error?.message ?? '');
+          this.toastService.showToast({
+            error: error,
+            defaultMsg: 'Lỗi không xác định',
+            title: 'Lỗi Đăng Ký'
+          });
+        } 
     })   
   }
   togglePassword() {

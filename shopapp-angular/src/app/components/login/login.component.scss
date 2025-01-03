@@ -110,3 +110,29 @@
     /* background-color: rgb(105, 244, 181) */
     margin: 20px;
 }
+
+.social-login-buttons {
+    display: flex;
+  }
+  
+  .social-button {
+    flex: 1;
+    margin: 5px;
+    padding: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 8px; /* Thêm thuộc tính này để bo viền */
+  }
+  
+  .google-button {
+    background-color: #db4437; /* Màu đỏ của Google */
+    color: white;
+    border: none;
+  }
+  
+  .facebook-button {
+    background-color: #4267B2; /* Màu xanh của Facebook */
+    color: white;
+    border: none;
+  }
+  

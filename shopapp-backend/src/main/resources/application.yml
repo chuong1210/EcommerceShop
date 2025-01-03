@@ -40,6 +40,24 @@ spring:
       use-redis-cache: false
       host: ${REDIS_HOST:localhost} # Default to 'localhost' if not provided
       port: ${REDIS_PORT:6379}      # Default to 6379 if not provided
+#  kafka:
+#    bootstrap-servers: localhost:9092
+#    consumer:
+#      group-id: notification-consumer-group
+#    producer:
+#      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+#      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      #transaction-id-prefix: tx.
+      properties:
+        "[spring.json.type.mapping]": category:com.project.shopapp.models.Category
+    consumer:
+      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
+    topic:
+      discount-notifications: discount
   security:
     oauth2:
       client:

@@ -13,11 +13,14 @@ import { UserProfileComponent } from './components/user-profile/user.profile.com
 import { AdminComponent } from './components/admin/admin.component';
 import { AuthGuardFn } from './guards/auth.guard';
 import { AdminGuardFn } from './guards/admin.guard';
+import { AuthCallbackComponent } from './components/auth-callback/auth-callback.component';
 //import { OrderAdminComponent } from './components/admin/order/order.admin.component';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'login', component: LoginComponent },  
+  { path: 'auth/google/callback', component: AuthCallbackComponent },
+  { path: 'auth/facebook/callback', component: AuthCallbackComponent },
   { path: 'register', component: RegisterComponent },
   { path: 'products/:id', component: DetailProductComponent },  
   { path: 'orders', component: OrderComponent,canActivate:[AuthGuardFn] },

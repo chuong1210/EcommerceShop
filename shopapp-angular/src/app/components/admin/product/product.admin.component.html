@@ -26,8 +26,7 @@
           <th>Actions</th>
         </tr>
       </thead>
-      <tbody>
-        <!-- Use Angular's *ngFor directive to loop through products array -->
+      <tbody>        
         @for(product of products; track product.id) {
           <tr>
             <td>{{ product.id }}</td>

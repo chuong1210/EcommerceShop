@@ -1,14 +1,10 @@
 import { Component, OnInit, Inject } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { NgForm } from '@angular/forms';
-import { NgModule } from '@angular/core';
-
-import { Observable } from 'rxjs';
-import { Location } from '@angular/common';
 import { OrderResponse } from '../../../responses/order/order.response';
-import { OrderService } from '../../../services/order.service';
 import { CommonModule,DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ApiResponse } from '../../../responses/api.response';
+import {  HttpErrorResponse } from '@angular/common/http';
+import { BaseComponent } from '../../base/base.component';
 
 @Component({
   selector: 'app-order-admin',
@@ -20,7 +16,7 @@ import { FormsModule } from '@angular/forms';
     FormsModule,
   ]
 })
-export class OrderAdminComponent implements OnInit{  
+export class OrderAdminComponent extends BaseComponent implements OnInit{  
   orders: OrderResponse[] = [];
   currentPage: number = 0;
   itemsPerPage: number = 12;
@@ -30,15 +26,11 @@ export class OrderAdminComponent implements OnInit{
   visiblePages: number[] = [];
   localStorage?:Storage;
 
-  constructor(
-    private orderService: OrderService,
-    private router: Router,
-    private route: ActivatedRoute,
-    private location: Location,
-    @Inject(DOCUMENT) private document: Document
-  ) {
+  constructor() {
+    super();
     this.localStorage = document.defaultView?.localStorage;
   }
+  
   ngOnInit(): void {
     debugger
     this.currentPage = Number(this.localStorage?.getItem('currentOrderAdminPage')) || 0; 
@@ -54,18 +46,18 @@ export class OrderAdminComponent implements OnInit{
   getAllOrders(keyword: string, page: number, limit: number) {
     debugger
     this.orderService.getAllOrders(keyword, page, limit).subscribe({
-      next: (response: any) => {
+      next: (apiResponse: ApiResponse) => {
         debugger        
-        this.orders = response.orders;
-        this.totalPages = response.totalPages;
+        this.orders = apiResponse.data.orders;
+        this.totalPages = apiResponse.data.totalPages;
         this.visiblePages = this.generateVisiblePageArray(this.currentPage, this.totalPages);
       },
       complete: () => {
         debugger;
       },
-      error: (error: any) => {
+      error: (error: HttpErrorResponse) => {
         debugger;
-        console.error('Error fetching products:', error);
+        console.error(error?.error?.message ?? '');
       }
     });    
   }
@@ -75,21 +67,7 @@ export class OrderAdminComponent implements OnInit{
     this.localStorage?.setItem('currentOrderAdminPage', String(this.currentPage));         
     this.getAllOrders(this.keyword, this.currentPage, this.itemsPerPage);
   }
-
-  generateVisiblePageArray(currentPage: number, totalPages: number): number[] {
-    const maxVisiblePages = 5;
-    const halfVisiblePages = Math.floor(maxVisiblePages / 2);
-
-    let startPage = Math.max(currentPage - halfVisiblePages, 1);
-    let endPage = Math.min(startPage + maxVisiblePages - 1, totalPages);
-
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(endPage - maxVisiblePages + 1, 1);
-    }
-
-    return new Array(endPage - startPage + 1).fill(0)
-        .map((_, index) => startPage + index);
-  }
+  
 
   deleteOrder(id:number) {
     const confirmation = window
@@ -97,16 +75,16 @@ export class OrderAdminComponent implements OnInit{
     if (confirmation) {
       debugger
       this.orderService.deleteOrder(id).subscribe({
-        next: (response: any) => {
+        next: (response: ApiResponse) => {
           debugger 
           location.reload();          
         },
         complete: () => {
           debugger;          
         },
-        error: (error: any) => {
+        error: (error: HttpErrorResponse) => {
           debugger;
-          console.error('Error fetching products:', error);
+          console.error(error?.error?.message ?? '');
         }
       });    
     }

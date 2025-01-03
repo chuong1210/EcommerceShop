@@ -22,6 +22,19 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
              @Param("keyword") String keyword, Pageable pageable);
     @Query("SELECT p FROM Product p LEFT JOIN FETCH p.productImages WHERE p.id = :productId")
     Optional<Product> getDetailProduct(@Param("productId") Long productId);
+//    @Query("""
+//       SELECT p FROM Product p WHERE (:name IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :name, '%')))
+//       AND (:categoryId IS NULL OR p.category.id = :categoryId)
+//       AND (:minQuantity IS NULL OR p.quantity >= :minQuantity)
+//       AND (:maxQuantity IS NULL OR p.quantity <= :maxQuantity)
+//       """)
+//    Page<Product> searchProducts(
+//            @Param("name") String name,
+//            @Param("categoryId") Long categoryId,
+//            @Param("minQuantity") Integer minQuantity,
+//            @Param("maxQuantity") Integer maxQuantity,
+//            Pageable pageable
+//    );
 
     @Query("SELECT p FROM Product p WHERE p.id IN :productIds")
     List<Product> findProductsByIds(@Param("productIds") List<Long> productIds);

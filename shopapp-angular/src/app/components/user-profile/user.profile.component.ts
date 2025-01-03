@@ -1,4 +1,4 @@
-import { Component, ViewChild, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { 
   FormBuilder, 
   FormGroup, 
@@ -8,9 +8,6 @@ import {
   AbstractControl
 } from '@angular/forms';
 
-import { Router, ActivatedRoute } from '@angular/router';
-import { UserService } from '../../services/user.service';
-import { TokenService } from '../../services/token.service';
 import { UserResponse } from '../../responses/user/user.response';
 import { UpdateUserDTO } from '../../dtos/user/update.user.dto';
 
@@ -18,7 +15,9 @@ import { HeaderComponent } from '../header/header.component';
 import { FooterComponent } from '../footer/footer.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-
+import { HttpErrorResponse } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { BaseComponent } from '../base/base.component';
 
 @Component({
   selector: 'user-profile',
@@ -33,54 +32,46 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
     ReactiveFormsModule,   
   ],
 })
-export class UserProfileComponent implements OnInit {
-  userResponse?: UserResponse;
-  userProfileForm: FormGroup;
+export class UserProfileComponent extends BaseComponent implements OnInit {
+  userResponse?: UserResponse;  
   token:string = '';
-  constructor(
-    private formBuilder: FormBuilder,
-    private activatedRoute: ActivatedRoute,
-    private userService: UserService,
-    private router: Router,
-    private tokenService: TokenService,
-  ){        
-    this.userProfileForm = this.formBuilder.group({
-      fullname: [''],     
-      address: ['', [Validators.minLength(3)]],       
-      password: ['', [Validators.minLength(3)]], 
-      retype_password: ['', [Validators.minLength(3)]], 
-      date_of_birth: [Date.now()],      
-    }, {
-      validators: this.passwordMatchValidator// Custom validator function for password match
-    });
-  }
+  formBuilder: FormBuilder = inject(FormBuilder);
   
-  ngOnInit(): void {  
-    debugger
+
+  userProfileForm: FormGroup = this.formBuilder.group({
+    fullname: [''],     
+    address: ['', [Validators.minLength(3)]],       
+    password: ['', [Validators.minLength(3)]], 
+    retype_password: ['', [Validators.minLength(3)]], 
+    date_of_birth: [Date.now()],      
+  }, {
+    validators: this.passwordMatchValidator // Custom validator function for password match
+  });
+  
+  ngOnInit(): void {
+    debugger;
     this.token = this.tokenService.getToken();
     this.userService.getUserDetail(this.token).subscribe({
       next: (response: any) => {
-        debugger
+        debugger;
         this.userResponse = {
-          ...response,
-          date_of_birth: new Date(response.date_of_birth),
-        };    
+          ...response.data,
+          date_of_birth: new Date(response.data.date_of_birth),
+        };        
         this.userProfileForm.patchValue({
-          fullname: this.userResponse?.fullname ?? '',
-          address: this.userResponse?.address ?? '',
+          fullname: this.userResponse?.fullname || '',
+          address: this.userResponse?.address || '',
           date_of_birth: this.userResponse?.date_of_birth.toISOString().substring(0, 10),
-        });        
-        this.userService.saveUserResponseToLocalStorage(this.userResponse);         
+        });
+  
+        this.userService.saveUserResponseToLocalStorage(this.userResponse);
       },
-      complete: () => {
+      error: (error: HttpErrorResponse) => {
         debugger;
+        console.error('Lỗi khi lấy thông tin người dùng:', error?.error?.message ?? '');
       },
-      error: (error: any) => {
-        debugger;
-        alert(error.error.message);
-      }
-    })
-  }
+    });
+  }  
   passwordMatchValidator(): ValidatorFn {
     return (formGroup: AbstractControl): ValidationErrors | null => {
       const password = formGroup.get('password')?.value;
@@ -110,13 +101,14 @@ export class UserProfileComponent implements OnInit {
             this.tokenService.removeToken();
             this.router.navigate(['/login']);
           },
-          error: (error: any) => {
-            alert(error.error.message);
-          }
+          error: (error: HttpErrorResponse) => {
+            debugger;
+            console.error(error?.error?.message ?? '');
+          } 
         });
     } else {
       if (this.userProfileForm.hasError('passwordMismatch')) {        
-        alert('Mật khẩu và mật khẩu gõ lại chưa chính xác')
+        console.error('Mật khẩu và mật khẩu gõ lại chưa chính xác')
       }
     }
   }    

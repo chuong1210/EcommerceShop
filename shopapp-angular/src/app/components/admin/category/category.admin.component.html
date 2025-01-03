@@ -13,8 +13,7 @@
           <th>Actions</th>
         </tr>
       </thead>
-      <tbody>
-        <!-- Use Angular's *ngFor directive to loop through categorys array -->
+      <tbody>        
         @for(category of categories; track category.id){
           <tr>
             <td>{{ category.id }}</td>

@@ -1,18 +1,13 @@
 import { Component, OnInit } from '@angular/core';
-import { Product } from '../../models/product';
-import { CartService } from '../../services/cart.service';
-import { ProductService } from '../../services/product.service';
-import { OrderService } from '../../services/order.service';
-import { OrderDTO } from '../../dtos/order/order.dto';
-import { ActivatedRoute } from '@angular/router';
 import { OrderResponse } from '../../responses/order/order.response';
 import { environment } from '../../../environments/environment';
 import { OrderDetail } from '../../models/order.detail';
 import { FooterComponent } from '../footer/footer.component';
 import { HeaderComponent } from '../header/header.component';
 import { CommonModule } from '@angular/common';
-
-
+import { ApiResponse } from '../../responses/api.response';
+import { HttpErrorResponse } from '@angular/common/http';
+import { BaseComponent } from '../base/base.component';
 @Component({
   selector: 'app-order-detail',
   templateUrl: './order.detail.component.html',
@@ -24,7 +19,7 @@ import { CommonModule } from '@angular/common';
     CommonModule
   ]
 })
-export class OrderDetailComponent implements OnInit {  
+export class OrderDetailComponent extends BaseComponent implements OnInit {  
   orderResponse: OrderResponse = {
     id: 0, // Hoặc bất kỳ giá trị số nào bạn muốn
     user_id: 0,
@@ -42,10 +37,7 @@ export class OrderDetailComponent implements OnInit {
     payment_method: '',
     order_details: [] // Một mảng rỗng
   };  
-  constructor(
-    private orderService: OrderService,
-    private route: ActivatedRoute
-    ) {}
+    
 
   ngOnInit(): void {
     this.getOrderDetails();
@@ -53,10 +45,11 @@ export class OrderDetailComponent implements OnInit {
   
   getOrderDetails(): void {
     debugger
-    const orderId = Number(this.route.snapshot.paramMap.get('orderId'));
+    const orderId = Number(this.activatedRoute.snapshot.paramMap.get('orderId'));
     this.orderService.getOrderById(orderId).subscribe({
-      next: (response: any) => {        
-        debugger;       
+      next: (apiResponse: ApiResponse) => {        
+        debugger;   
+        const response = apiResponse.data    
         this.orderResponse.id = response.id;
         this.orderResponse.user_id = response.user_id;
         this.orderResponse.fullname = response.fullname;
@@ -90,10 +83,10 @@ export class OrderDetailComponent implements OnInit {
       complete: () => {
         debugger;        
       },
-      error: (error: any) => {
+      error: (error: HttpErrorResponse) => {
         debugger;
-        console.error('Error fetching detail:', error);
-      }
+        console.error(error?.error?.message ?? '');
+      } 
     });
   }
 }

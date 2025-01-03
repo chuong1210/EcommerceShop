@@ -1,10 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { Category } from '../../../../models/category';
-import { CategoryService } from '../../../../services/category.service';
-import { ActivatedRoute, Router } from '@angular/router';
 import { UpdateCategoryDTO } from '../../../../dtos/category/update.category.dto';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ApiResponse } from '../../../../responses/api.response';
+import { HttpErrorResponse } from '@angular/common/http';
+import { BaseComponent } from '../../../base/base.component';
 
 @Component({
   selector: 'app-detail.category.admin',
@@ -17,22 +18,11 @@ import { FormsModule } from '@angular/forms';
   ]
 })
 
-export class UpdateCategoryAdminComponent implements OnInit {
-  categoryId: number;
-  updatedCategory: Category;
-  
-  constructor(
-    private categoryService: CategoryService,
-    private route: ActivatedRoute,
-    private router: Router,
-  
-  ) {
-    this.categoryId = 0;    
-    this.updatedCategory = {} as Category;  
-  }
-
-  ngOnInit(): void {    
-    this.route.paramMap.subscribe(params => {
+export class UpdateCategoryAdminComponent extends BaseComponent implements OnInit {
+  categoryId: number = 0;
+  updatedCategory: Category = {} as Category;
+   ngOnInit(): void {    
+    this.activatedRoute.paramMap.subscribe(params => {
       debugger
       this.categoryId = Number(params.get('id'));
       this.getCategoryDetails();
@@ -42,15 +32,16 @@ export class UpdateCategoryAdminComponent implements OnInit {
   
   getCategoryDetails(): void {
     this.categoryService.getDetailCategory(this.categoryId).subscribe({
-      next: (category: Category) => {        
-        this.updatedCategory = { ...category };                        
+      next: (apiResponse: ApiResponse) => {        
+        this.updatedCategory = { ...apiResponse.data };                        
       },
       complete: () => {
         
       },
-      error: (error: any) => {
-        
-      }
+      error: (error: HttpErrorResponse) => {
+        debugger;
+        console.error(error?.error?.message ?? '');
+      } 
     });     
   }
   updateCategory() {
@@ -66,10 +57,10 @@ export class UpdateCategoryAdminComponent implements OnInit {
         debugger;
         this.router.navigate(['/admin/categories']);        
       },
-      error: (error: any) => {
+      error: (error: HttpErrorResponse) => {
         debugger;
-        console.error('Error fetching categorys:', error);
-      }
+        console.error(error?.error?.message ?? '');
+      } 
     });  
   }  
 }

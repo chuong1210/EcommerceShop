@@ -8,6 +8,8 @@ import { HttpUtilService } from './http.util.service';
 import { UserResponse } from '../responses/user/user.response';
 import { UpdateUserDTO } from '../dtos/user/update.user.dto';
 import { DOCUMENT } from '@angular/common';
+import { inject } from '@angular/core';
+import { ApiResponse } from '../responses/api.response';
 
 @Injectable({
   providedIn: 'root'
@@ -16,39 +18,52 @@ export class UserService {
   private apiRegister = `${environment.apiBaseUrl}/users/register`;
   private apiLogin = `${environment.apiBaseUrl}/users/login`;
   private apiUserDetail = `${environment.apiBaseUrl}/users/details`;
-  localStorage?:Storage;
 
+  private http = inject(HttpClient);
+  private httpUtilService = inject(HttpUtilService);  
+
+  localStorage?:Storage;
+  
   private apiConfig = {
     headers: this.httpUtilService.createHeaders(),
   }
 
-  constructor(
-    private http: HttpClient,
-    private httpUtilService: HttpUtilService,
+  constructor(        
     @Inject(DOCUMENT) private document: Document
   ) { 
     this.localStorage = document.defaultView?.localStorage;
   }
 
-  register(registerDTO: RegisterDTO):Observable<any> {
-    return this.http.post(this.apiRegister, registerDTO, this.apiConfig);
+  register(registerDTO: RegisterDTO):Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(this.apiRegister, registerDTO, this.apiConfig);
   }
 
-  login(loginDTO: LoginDTO): Observable<any> {    
-    return this.http.post(this.apiLogin, loginDTO, this.apiConfig);
+  login(loginDTO: LoginDTO): Observable<ApiResponse> {    
+    return this.http.post<ApiResponse>(this.apiLogin, loginDTO, this.apiConfig);
   }
-  getUserDetail(token: string) {
-    return this.http.post(this.apiUserDetail, {
+  /*
+  getUserDetail(token: string): Observable<ApiResponse> {
+    debugger
+    return this.http.post<ApiResponse>(this.apiUserDetail, {
       headers: new HttpHeaders({
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`
       })
     })
   }
-  updateUserDetail(token: string, updateUserDTO: UpdateUserDTO) {
-    debugger
+  */
+  getUserDetail(token: string): Observable<ApiResponse> {
+    return this.http.post<ApiResponse>(this.apiUserDetail, null, {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      })
+    });
+  }
+  
+  updateUserDetail(token: string, updateUserDTO: UpdateUserDTO): Observable<ApiResponse>  {
     let userResponse = this.getUserResponseFromLocalStorage();        
-    return this.http.put(`${this.apiUserDetail}/${userResponse?.id}`,updateUserDTO,{
+    return this.http.put<ApiResponse>(`${this.apiUserDetail}/${userResponse?.id}`,updateUserDTO,{
       headers: new HttpHeaders({
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`
@@ -95,6 +110,20 @@ export class UserService {
       console.error('Error removing user data from local storage:', error);
       // Handle the error as needed
     }
+  }
+  getUsers(params: { page: number, limit: number, keyword: string }): Observable<ApiResponse> {
+    const url = `${environment.apiBaseUrl}/users`;
+    return this.http.get<ApiResponse>(url, { params: params });
+  }
+
+  resetPassword(userId: number): Observable<ApiResponse> {
+    const url = `${environment.apiBaseUrl}/users/reset-password/${userId}`;
+    return this.http.put<ApiResponse>(url, null, this.apiConfig);
+  }
+
+  toggleUserStatus(params: { userId: number, enable: boolean }): Observable<ApiResponse> {
+    const url = `${environment.apiBaseUrl}/users/block/${params.userId}/${params.enable ? '1' : '0'}`;
+    return this.http.put<ApiResponse>(url, null, this.apiConfig);
   }
   
 }

@@ -133,15 +133,24 @@
               
         </table>   
             <div class="text-start mt-3">
-                <h4 class="header-text text-end ">Tổng giá: {{ totalAmount | number:'1.2-2'}}</h4>
+                <h4 class="header-text text-end ">Tổng giá: {{ totalAmount | number:'1.2-2'}} đ</h4>
             </div>
             <div class="mt-3">
                 <h4 class="product-header">Nhập coupon</h4>
                 <div class="input-group">
-                    <input type="text" class="form-control" placeholder="Nhập coupon">
-                    <button class="btn btn-gradient" type="button">Áp dụng</button>
+                    <input type="text" class="form-control" 
+                        formControlName="couponCode" 
+                        placeholder="Nhập coupon">
+                    <button 
+                        (click)="applyCoupon()"
+                        class="btn btn-gradient" type="button">Áp dụng</button>
                 </div>
-            </div>            
+            </div>    
+            @if(couponDiscount > 0) {
+                <div class="text-start mt-3">
+                    <h6 class="header-text text-end ">Bạn được discount: {{ couponDiscount | number:'1.2-2'}} đ</h6>
+                </div>
+            }
             <div class="text-start mt-3">
                 <button 
                     (click)="placeOrder()"
